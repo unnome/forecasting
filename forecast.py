@@ -6,6 +6,7 @@ from prediction_models import (
     PredictionModel,
 )
 
+from loss_functions import MAE, RMSE
 
 # Ivan opens the app, and is asked to insert some inputs, such as:
 # - the target series:
@@ -37,6 +38,12 @@ def makeTrainDF(df: pd.DataFrame, split_date: str) -> pd.DataFrame:
     return train_df
 
 
+def makeValidationDF(df: pd.DataFrame, split_date: str) -> pd.DataFrame:
+    split_date = pd.to_datetime(split_date)
+    valid_df = df[df['dt'] > split_date]
+    return valid_df
+
+
 def makeEmptyPredictionDF(df: pd.DataFrame, split_date: str) -> pd.DataFrame:
     split_date = pd.to_datetime(split_date)
     empty_pred_df = df[df['dt'] > split_date].copy(deep=True)
@@ -66,7 +73,12 @@ if __name__ == '__main__':
     df = importDataFrame(DATA_LOCATION)
     split_date = '1987-01-01'
     train = makeTrainDF(df, split_date)
+    valid = makeValidationDF(df, split_date)
     empty_pred = makeEmptyPredictionDF(df, split_date)
     pred = LastValueModel.create_prediction(train, empty_pred)
     plot_df = makePlotDF(df, pred)
     plot_truth_and_pred(plot_df, LastValueModel)
+    MAE_val = MAE.calculate_performance(valid, pred)
+    RMSE_val = RMSE.calculate_performance(valid, pred)
+    print('MAE --> ', MAE_val)
+    print('RMSE --> ', RMSE_val)

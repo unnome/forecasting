@@ -1,19 +1,24 @@
-import unittest
+import numpy as np
 import pandas as pd
+import unittest
 
 from forecast import (
     importDataFrame,
     makeEmptyPredictionDF,
     makeTrainDF,
+    makeValidationDF,
     makePlotDF,
 )
-from prediction_models import PredictionModel
+from prediction_models import PredictionModel, LastValueModel
+
+from loss_functions import LossFunction
 
 
 class Target(unittest.TestCase):
 
     def setUp(self):
-        self.my_test_ts = importDataFrame()
+        self.data_location = 'data/daily-min-temperatures.csv'
+        self.my_test_ts = importDataFrame(self.data_location)
         self.column_names = self.my_test_ts.columns
 
     def test_df_contains_only_two_columns(self):
@@ -42,7 +47,8 @@ class Target(unittest.TestCase):
 class TrainDF(unittest.TestCase):
 
     def setUp(self):
-        self.target_df = importDataFrame()
+        self.data_location = 'data/daily-min-temperatures.csv'
+        self.target_df = importDataFrame(self.data_location)
         self.split_date = pd.to_datetime('1986-01-01 00:00:00')
         self.split_df = makeTrainDF(self.target_df, self.split_date)
 
@@ -53,7 +59,8 @@ class TrainDF(unittest.TestCase):
 class EmptyPredictionDF(unittest.TestCase):
 
     def setUp(self):
-        self.target_df = importDataFrame()
+        self.data_location = 'data/daily-min-temperatures.csv'
+        self.target_df = importDataFrame(self.data_location)
         self.split_date = pd.to_datetime('1986-01-01 00:00:00')
         self.empty_pred_df = makeEmptyPredictionDF(self.target_df,
                                                    self.split_date)
@@ -75,7 +82,8 @@ class EmptyPredictionDF(unittest.TestCase):
 class PredictionModelTest(unittest.TestCase):
 
     def setUp(self):
-        self.target_df = importDataFrame()
+        self.data_location = 'data/daily-min-temperatures.csv'
+        self.target_df = importDataFrame(self.data_location)
         self.split_date = pd.to_datetime('1986-01-01 00:00:00')
         self.train_df = makeTrainDF(self.target_df, self.split_date)
         self.empty_pred_df = makeEmptyPredictionDF(self.target_df,
@@ -110,24 +118,15 @@ class PredictionModelTest(unittest.TestCase):
 class PlottingDF(unittest.TestCase):
 
     def setUp(self):
-        self.target_df = importDataFrame()
+        self.data_location = 'data/daily-min-temperatures.csv'
+        self.target_df = importDataFrame(self.data_location)
         self.split_date = pd.to_datetime('1986-01-01 00:00:00')
         self.train_df = makeTrainDF(self.target_df, self.split_date)
         self.empty_pred_df = makeEmptyPredictionDF(self.target_df,
                                                    self.split_date)
 
-        self.test_model = PredictionModel('test name')
-
-        def dummy_pred_fn(train_df, empty_pred_df):
-            last_value = (train_df[train_df['dt'] == train_df['dt']
-                                   .max()]['val'])
-            pred_df = empty_pred_df.copy(deep=True)
-            pred_df['val'] = last_value
-            return pred_df
-
-        self.test_model.predict = dummy_pred_fn
-        self.pred_df_from_model = self.test_model.predict(self.train_df,
-                                                          self.empty_pred_df)
+        self.pred_df_from_model = LastValueModel.create_prediction(
+            self.train_df, self.empty_pred_df)
         self.plotting_df = makePlotDF(self.target_df,
                                       self.pred_df_from_model)
 
@@ -138,6 +137,37 @@ class PlottingDF(unittest.TestCase):
     def test_model_predict_output_columns_have_values(self):
         for value in self.plotting_df['val']:
             self.assertIsNotNone(value)
+
+
+class TestLossFunction(unittest.TestCase):
+
+    def setUp(self):
+        self.data_location = 'data/daily-min-temperatures.csv'
+        self.target_df = importDataFrame(self.data_location)
+        self.split_date = pd.to_datetime('1987-01-01 00:00:00')
+        self.train_df = makeTrainDF(self.target_df, self.split_date)
+        self.valid_df = makeValidationDF(self.target_df, self.split_date)
+        self.empty_pred_df = makeEmptyPredictionDF(self.target_df,
+                                                   self.split_date)
+        self.pred_df = LastValueModel.create_prediction(
+            self.train_df, self.empty_pred_df)
+        self.MAPE = LossFunction(name='MAPE')
+
+        def calc_MAPE(valid_df, pred_df):
+            test = valid_df['val'].sub(pred_df['val'])
+            test = test.sum()
+            return test
+
+        self.MAPE.calculate_performance = calc_MAPE
+
+    def test_loss_fn_class_has_calculate_performance_method(self):
+        self.assertTrue(hasattr(self.MAPE, 'calculate_performance'))
+
+    def test_loss_fn_work_with_rest_of_funnel(self):
+        self.MAPE_val = self.MAPE.calculate_performance(
+            self.valid_df, self.pred_df)
+        self.my_np_float = np.float64(0.99)
+        self.assertEqual(type(self.MAPE_val), type(self.my_np_float))
 
 
 if __name__ == '__main__':
