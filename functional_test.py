@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 
-from funnel import (
+from forecast import (
     importDataFrame,
     makeEmptyPredictionDF,
     makeTrainDF,

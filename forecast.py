@@ -20,8 +20,8 @@ from prediction_models import (
 DATA_LOCATION = 'data/daily-min-temperatures.csv'
 
 
-def importDataFrame() -> pd.DataFrame:
-    data = pd.read_csv(DATA_LOCATION)
+def importDataFrame(data_location: str) -> pd.DataFrame:
+    data = pd.read_csv(data_location)
     data = data.rename(columns={
         data.columns[0]: 'dt',
         data.columns[1]: 'val',
@@ -63,7 +63,7 @@ def plot_truth_and_pred(plotting_df: pd.DataFrame,
 
 
 if __name__ == '__main__':
-    df = importDataFrame()
+    df = importDataFrame(DATA_LOCATION)
     split_date = '1987-01-01'
     train = makeTrainDF(df, split_date)
     empty_pred = makeEmptyPredictionDF(df, split_date)
