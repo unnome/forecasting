@@ -62,7 +62,7 @@ def makePlotDF(target_df: pd.DataFrame,
 def plot_truth_and_pred(plotting_df: pd.DataFrame,
                         PredModel: PredictionModel) -> plt.plot:
     plotting_df = plotting_df.pivot(index='dt', columns='label', values='val')
-    plotting_df.plot(figsize=[20, 10], alpha=0.5)
+    plotting_df.plot(figsize=[20, 10], alpha=0.7)
     plt.title(PredModel.name)
     plt.savefig('/home/boats/Desktop/plot_test.png')
     print('plot saved')

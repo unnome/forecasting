@@ -79,7 +79,7 @@ class EmptyPredictionDF(unittest.TestCase):
             self.assertIsNone(value)
 
 
-class PredictionModelTest(unittest.TestCase):
+class TestPredictionModelClass(unittest.TestCase):
 
     def setUp(self):
         self.data_location = 'data/daily-min-temperatures.csv'
@@ -139,7 +139,7 @@ class PlottingDF(unittest.TestCase):
             self.assertIsNotNone(value)
 
 
-class TestLossFunction(unittest.TestCase):
+class TestLossFunctionClass(unittest.TestCase):
 
     def setUp(self):
         self.data_location = 'data/daily-min-temperatures.csv'

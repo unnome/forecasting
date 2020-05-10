@@ -12,9 +12,6 @@ class PredictionModel():
         return predict_df
 
 
-LastValueModel = PredictionModel(name='Last value')
-
-
 def last_value_prediction(train_df: pd.DataFrame,
                           empty_pred_df: pd.DataFrame) -> pd.DataFrame:
     last_value = (
@@ -25,4 +22,5 @@ def last_value_prediction(train_df: pd.DataFrame,
     return pred_df
 
 
+LastValueModel = PredictionModel(name='Last value')
 LastValueModel.create_prediction = last_value_prediction
