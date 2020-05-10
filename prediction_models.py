@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 import pandas as pd
 
 
@@ -8,8 +9,23 @@ class PredictionModel():
 
     def create_prediction(self, train_df: pd.DataFrame,
                           end_date: str) -> pd.DataFrame:
-        predict_df = train_df
-        return predict_df
+        pass
+
+    def present_results(self, train_df: pd.DataFrame,
+                        valid_df: pd.DataFrame,
+                        pred_df: pd.DataFrame,
+                        save_location: str) -> plt.plot:
+        train_df['label'] = 'train'
+        valid_df['label'] = 'validation'
+        pred_df['label'] = 'prediction'
+        self.plot_df = pd.concat([train_df, valid_df, pred_df])
+        self.plot_pivot = self.plot_df.pivot(
+            index='dt', columns='label', values='val'
+        )
+        self.plot_pivot.plot(figsize=[20, 10], alpha=0.7)
+        plt.title(self.name)
+        plt.savefig(save_location + self.name + '.png')
+        return self.plot_df
 
 
 def last_value_prediction(train_df: pd.DataFrame,

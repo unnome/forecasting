@@ -1,4 +1,5 @@
 import numpy as np
+import os.path
 import pandas as pd
 import unittest
 
@@ -7,7 +8,6 @@ from forecast import (
     makeEmptyPredictionDF,
     makeTrainDF,
     makeValidationDF,
-    makePlotDF,
 )
 from prediction_models import PredictionModel, LastValueModel
 
@@ -83,11 +83,15 @@ class TestPredictionModelClass(unittest.TestCase):
 
     def setUp(self):
         self.data_location = 'data/daily-min-temperatures.csv'
+        self.plot_save_location = '/home/boats/Desktop/'
         self.target_df = importDataFrame(self.data_location)
         self.split_date = pd.to_datetime('1986-01-01 00:00:00')
         self.train_df = makeTrainDF(self.target_df, self.split_date)
+        self.valid_df = makeValidationDF(self.target_df, self.split_date)
         self.empty_pred_df = makeEmptyPredictionDF(self.target_df,
                                                    self.split_date)
+        self.pred_df = LastValueModel.create_prediction(
+            self.train_df, self.empty_pred_df)
 
         self.test_model = PredictionModel('test name')
 
@@ -102,6 +106,10 @@ class TestPredictionModelClass(unittest.TestCase):
         self.pred_df_from_model = self.test_model.predict(self.train_df,
                                                           self.empty_pred_df)
 
+        self.plot_df = self.test_model.present_results(
+            self.train_df, self.valid_df, self.pred_df, self.plot_save_location
+        )
+
     def test_model_has_predict_method(self):
         self.assertTrue(hasattr(self.test_model, 'create_prediction'))
 
@@ -114,29 +122,18 @@ class TestPredictionModelClass(unittest.TestCase):
         for value in self.pred_df_from_model['val']:
             self.assertIsNotNone(value)
 
+    def test_model_presentation_outputs_a_df_with_3_cols(self):
+        self.assertEqual(len(self.plot_df.columns), 3)
 
-class PlottingDF(unittest.TestCase):
+    def test_plot_df_is_made_of_train_valid_and_pred(self):
+        self.unique_label_vals = self.plot_df.label.unique()
+        self.assertEqual(len(self.unique_label_vals), 3,
+                         self.unique_label_vals)
 
-    def setUp(self):
-        self.data_location = 'data/daily-min-temperatures.csv'
-        self.target_df = importDataFrame(self.data_location)
-        self.split_date = pd.to_datetime('1986-01-01 00:00:00')
-        self.train_df = makeTrainDF(self.target_df, self.split_date)
-        self.empty_pred_df = makeEmptyPredictionDF(self.target_df,
-                                                   self.split_date)
-
-        self.pred_df_from_model = LastValueModel.create_prediction(
-            self.train_df, self.empty_pred_df)
-        self.plotting_df = makePlotDF(self.target_df,
-                                      self.pred_df_from_model)
-
-    def test_df_has_the_three_expected_columns(self):
-        # the plotting df should have dt, val and label
-        self.assertEqual(len(self.plotting_df.columns), 3)
-
-    def test_model_predict_output_columns_have_values(self):
-        for value in self.plotting_df['val']:
-            self.assertIsNotNone(value)
+    def test_plot_function_outputs_a_plot_file(self):
+        self.path_to_file = (self.plot_save_location +
+                             self.test_model.name + '.png')
+        self.assertTrue(os.path.isfile(self.path_to_file))
 
 
 class TestLossFunctionClass(unittest.TestCase):

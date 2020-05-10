@@ -1,9 +1,7 @@
-from matplotlib import pyplot as plt
 import pandas as pd
 
 from prediction_models import (
     LastValueModel,
-    PredictionModel,
 )
 
 from loss_functions import MAE, RMSE
@@ -19,6 +17,7 @@ from loss_functions import MAE, RMSE
 
 
 DATA_LOCATION = 'data/daily-min-temperatures.csv'
+PLOT_SAVE_LOCATION = '/home/boats/Desktop'
 
 
 def importDataFrame(data_location: str) -> pd.DataFrame:
@@ -51,24 +50,6 @@ def makeEmptyPredictionDF(df: pd.DataFrame, split_date: str) -> pd.DataFrame:
     return empty_pred_df
 
 
-def makePlotDF(target_df: pd.DataFrame,
-               prediction_df: pd.DataFrame) -> pd.DataFrame:
-    target_df['label'] = 'truth'
-    prediction_df['label'] = 'prediction'
-    plotting_df = pd.concat([target_df, prediction_df])
-    return plotting_df
-
-
-def plot_truth_and_pred(plotting_df: pd.DataFrame,
-                        PredModel: PredictionModel) -> plt.plot:
-    plotting_df = plotting_df.pivot(index='dt', columns='label', values='val')
-    plotting_df.plot(figsize=[20, 10], alpha=0.7)
-    plt.title(PredModel.name)
-    plt.savefig('/home/boats/Desktop/plot_test.png')
-    print('plot saved')
-    return
-
-
 if __name__ == '__main__':
     df = importDataFrame(DATA_LOCATION)
     split_date = '1987-01-01'
@@ -76,8 +57,7 @@ if __name__ == '__main__':
     valid = makeValidationDF(df, split_date)
     empty_pred = makeEmptyPredictionDF(df, split_date)
     pred = LastValueModel.create_prediction(train, empty_pred)
-    plot_df = makePlotDF(df, pred)
-    plot_truth_and_pred(plot_df, LastValueModel)
+    LastValueModel.present_results(train, valid, pred, PLOT_SAVE_LOCATION)
     MAE_val = MAE.calculate_performance(valid, pred)
     RMSE_val = RMSE.calculate_performance(valid, pred)
     print('MAE --> ', MAE_val)
