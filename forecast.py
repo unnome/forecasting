@@ -33,13 +33,13 @@ def importDataFrame(data_location: str) -> pd.DataFrame:
 
 def makeTrainDF(df: pd.DataFrame, split_date: str) -> pd.DataFrame:
     split_date = pd.to_datetime(split_date)
-    train_df = df[df['dt'] <= split_date]
+    train_df = df[df['dt'] <= split_date].copy(deep=True)
     return train_df
 
 
 def makeValidationDF(df: pd.DataFrame, split_date: str) -> pd.DataFrame:
     split_date = pd.to_datetime(split_date)
-    valid_df = df[df['dt'] > split_date]
+    valid_df = df[df['dt'] > split_date].copy(deep=True)
     return valid_df
 
 
